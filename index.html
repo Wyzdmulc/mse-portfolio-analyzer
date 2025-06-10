@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSE Portfolio Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .investment-goals {
+            text-align: center;
+        }
+
+        .investment-goals h2 {
+            margin-bottom: 30px;
+            color: #4a5568;
+            font-size: 2rem;
+        }
+
+        .goals-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .goal-option {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .goal-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(240, 147, 251, 0.4);
+        }
+
+        .goal-option.selected {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            transform: translateY(-5px);
+        }
+
+        .goal-option h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .portfolio-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .portfolio-card h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .stock-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stock-info {
+            flex: 1;
+        }
+
+        .stock-symbol {
+            font-weight: bold;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .stock-details {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .stock-allocation {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .recommendation-reason {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #f6ad55;
+        }
+
+        .recommendation-reason h4 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .recommendation-reason p {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .market-insight {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #6366f1;
+        }
+
+        .market-insight h4 {
+            color: #312e81;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #4338ca;
+        }
+
+        .insight-icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MSE Portfolio Analyzer</h1>
+            <p>Intelligent Portfolio Selection for Malawi Stock Exchange</p>
+        </div>
+
+        <div class="card investment-goals" id="goalSelection">
+            <h2>What are your investment goals?</h2>
+            <div class="goals-container">
+                <button class="goal-option" data-goal="mpt">
+                    <h3>🎯 Maximize Returns</h3>
+                    <p>Optimize your portfolio using Modern Portfolio Theory to maximize returns while minimizing risk through diversification.</p>
+                </button>
+                <button class="goal-option" data-goal="dividend">
+                    <h3>💰 Dividend Income</h3>
+                    <p>Focus on dividend-paying stocks to generate steady income from your investments with reliable cash flows.</p>
+                </button>
+                <button class="goal-option" data-goal="market-recommendation">
+                    <h3>🤔 Not Sure Yet?</h3>
+                    <p>Let our AI analyze current market conditions and recommend the best stocks for you based on comprehensive market analysis.</p>
+                </button>
+            </div>
+            <button class="analyze-btn" id="analyzeBtn" disabled>Analyze Portfolio</button>
+        </div>
+
+        <div class="card loading" id="loadingSection" style="display: none;">
+            <div class="spinner"></div>
+            <h3>Analyzing MSE Data...</h3>
+            <p>Fetching stock data and optimizing your portfolio</p>
+        </div>
+
+        <div class="card results" id="resultsSection">
+            <div id="portfolioResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simulated MSE data - In a real implementation, this would be fetched from MSE API
+        const mseStocks = [
+            {
+                symbol: 'AIRTEL',
+                name: 'Airtel Malawi Limited',
+                price: 185.50,
+                marketCap: 45000000000,
+                dividend: 12.50,
+                dividendYield: 6.74,
+                beta: 0.85,
+                peRatio: 8.2,
+                returns: [0.12, 0.08, 0.15, -0.03, 0.18, 0.09, 0.11, 0.14, 0.06, 0.13, 0.07, 0.16]
+            },
+            {
+                symbol: 'NBM',
+                name: 'National Bank of Malawi',
+                price: 295.00,
+                marketCap: 35000000000,
+                dividend: 18.00,
+                dividendYield: 6.10,
+                beta: 1.15,
+                peRatio: 6.8,
+                returns: [0.14, 0.11, 0.09, 0.16, -0.05, 0.12, 0.08, 0.19, 0.13, 0.07, 0.15, 0.10]
+            },
+            {
+                symbol: 'STANDARD',
+                name: 'Standard Bank Limited',
+                price: 420.75,
+                marketCap: 28000000000,
+                dividend: 22.50,
+                dividendYield: 5.35,
+                beta: 1.05,
+                peRatio: 7.5,
+                returns: [0.10, 0.13, 0.07, 0.11, 0.15, -0.02, 0.14, 0.08, 0.12, 0.16, 0.09, 0.13]
+            },
+            {
+                symbol: 'NICO',
+                name: 'NICO Holdings Limited',
+                price: 78.25,
+                marketCap: 18000000000,
+                dividend: 4.20,
+                dividendYield: 5.37,
+                beta: 0.95,
+                peRatio: 9.1,
+                returns: [0.08, 0.12, 0.14, 0.06, 0.10, 0.17, -0.04, 0.11, 0.09, 0.13, 0.08, 0.12]
+            },
+            {
+                symbol: 'ILLOVO',
+                name: 'Illovo Sugar Malawi Limited',
+                price: 145.80,
+                marketCap: 22000000000,
+                dividend: 8.50,
+                dividendYield: 5.83,
+                beta: 0.75,
+                peRatio: 12.3,
+                returns: [0.06, 0.09, 0.11, 0.13, 0.05, 0.14, 0.08, -0.02, 0.12, 0.10, 0.15, 0.07]
+            },
+            {
+                symbol: 'PCL',
+                name: 'Press Corporation Limited',
+                price: 312.50,
+                marketCap: 25000000000,
+                dividend: 15.75,
+                dividendYield: 5.04,
+                beta: 1.25,
+                peRatio: 8.9,
+                returns: [0.15, 0.07, 0.12, 0.09, 0.18, 0.06, -0.03, 0.14, 0.11, 0.08, 0.13, 0.10]
+            },
+            {
+                symbol: 'MPICO',
+                name: 'MPICO Limited',
+                price: 67.30,
+                marketCap: 12000000000,
+                dividend: 3.80,
+                dividendYield: 5.65,
+                beta: 0.88,
+                peRatio: 10.2,
+                returns: [0.09, 0.11, 0.08, 0.14, 0.07, 0.12, 0.10, 0.06, 0.15, -0.01, 0.13, 0.09]
+            },
+            {
+                symbol: 'FMBCH',
+                name: 'FMB Capital Holdings Limited',
+                price: 198.40,
+                marketCap: 20000000000,
+                dividend: 11.20,
+                dividendYield: 5.65,
+                beta: 1.10,
+                peRatio: 7.8,
+                returns: [0.12, 0.09, 0.16, 0.08, 0.11, 0.14, 0.05, 0.13, -0.02, 0.10, 0.12, 0.15]
+            }
+        ];
+
+        let selectedGoal = null;
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const goalOptions = document.querySelectorAll('.goal-option');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+
+            goalOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    goalOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedGoal = this.getAttribute('data-goal');
+                    analyzeBtn.disabled = false;
+                });
+            });
+
+            analyzeBtn.addEventListener('click', analyzePortfolio);
+        });
+
+        function analyzePortfolio() {
+            const goalSection = document.getElementById('goalSelection');
+            const loadingSection = document.getElementById('loadingSection');
+            const resultsSection = document.getElementById('resultsSection');
+
+            goalSection.style.display = 'none';
+            loadingSection.style.display = 'block';
+            resultsSection.style.display = 'none';
+
+            // Simulate API call delay
+            setTimeout(() => {
+                let portfolio;
+                if (selectedGoal === 'mpt') {
+                    portfolio = optimizeMPTPortfolio();
+                } else if (selectedGoal === 'dividend') {
+                    portfolio = optimizeDividendPortfolio();
+                } else if (selectedGoal === 'market-recommendation') {
+                    portfolio = generateMarketRecommendation();
+                }
+
+                displayResults(portfolio);
+                loadingSection.style.display = 'none';
+                resultsSection.style.display = 'block';
+            }, 3000);
+        }
+
+        function optimizeMPTPortfolio() {
+            // Modern Portfolio Theory optimization (simplified)
+            // Calculate expected returns and volatilities
+            const stockData = mseStocks.map(stock => {
+                const avgReturn = stock.returns.reduce((a, b) => a + b) / stock.returns.length;
+                const variance = stock.returns.reduce((sum, ret) => sum + Math.pow(ret - avgReturn, 2), 0) / stock.returns.length;
+                const volatility = Math.sqrt(variance);
+                
+                return {
+                    ...stock,
+                    expectedReturn: avgReturn,
+                    volatility: volatility,
+                    sharpeRatio: avgReturn / volatility
+                };
+            });
+
+            // Sort by Sharpe ratio and select top 3
+            const topStocks = stockData
+                .sort((a, b) => b.sharpeRatio - a.sharpeRatio)
+                .slice(0, 3);
+
+            // Calculate optimal weights (simplified equal weighting with adjustments)
+            const totalSharpe = topStocks.reduce((sum, stock) => sum + stock.sharpeRatio, 0);
+            const weights = topStocks.map(stock => stock.sharpeRatio / totalSharpe);
+
+            const portfolio = topStocks.map((stock, index) => ({
+                ...stock,
+                allocation: weights[index]
+            }));
+
+            const portfolioReturn = portfolio.reduce((sum, stock) => sum + (stock.expectedReturn * stock.allocation), 0);
+            const portfolioRisk = Math.sqrt(portfolio.reduce((sum, stock) => sum + Math.pow(stock.volatility * stock.allocation, 2), 0));
+
+            return {
+                type: 'MPT Optimized Portfolio',
+                description: 'Maximizing risk-adjusted returns using Modern Portfolio Theory',
+                stocks: portfolio,
+                metrics: {
+                    expectedReturn: (portfolioReturn * 100).toFixed(2) + '%',
+                    risk: (portfolioRisk * 100).toFixed(2) + '%',
+                    sharpeRatio: (portfolioReturn / portfolioRisk).toFixed(2)
+                }
+            };
+        }
+
+        function optimizeDividendPortfolio() {
+            // Sort by dividend yield and select top dividend-paying stocks
+            const dividendStocks = mseStocks
+                .filter(stock => stock.dividendYield > 5.0)
+                .sort((a, b) => b.dividendYield - a.dividendYield)
+                .slice(0, 3);
+
+            // Weight by dividend yield
+            const totalYield = dividendStocks.reduce((sum, stock) => sum + stock.dividendYield, 0);
+            const weights = dividendStocks.map(stock => stock.dividendYield / totalYield);
+
+            const portfolio = dividendStocks.map((stock, index) => ({
+                ...stock,
+                allocation: weights[index]
+            }));
+
+            const avgDividendYield = portfolio.reduce((sum, stock) => sum + (stock.dividendYield * stock.allocation), 0);
+            const totalDividendIncome = portfolio.reduce((sum, stock) => sum + (stock.dividend * stock.allocation), 0);
+
+            return {
+                type: 'Dividend Income Portfolio',
+                description: 'Maximizing dividend income with high-yield stocks',
+                stocks: portfolio,
+                metrics: {
+                    avgDividendYield: avgDividendYield.toFixed(2) + '%',
+                    annualDividendIncome: 'MWK ' + totalDividendIncome.toFixed(2) + ' per share',
+                    payoutConsistency: '85%'
+                }
+            };
+        }
+
+        function generateMarketRecommendation() {
+            // Advanced market analysis considering multiple factors
+            const marketConditions = analyzeMarketConditions();
+            
+            // Score each stock based on multiple criteria
+            const stockScores = mseStocks.map(stock => {
+                const avgReturn = stock.returns.reduce((a, b) => a + b) / stock.returns.length;
+                const variance = stock.returns.reduce((sum, ret) => sum + Math.pow(ret - avgReturn, 2), 0) / stock.returns.length;
+                const volatility = Math.sqrt(variance);
+                
+                // Multi-factor scoring system
+                const returnScore = avgReturn * 100; // Weight returns heavily
+                const dividendScore = stock.dividendYield * 5; // Dividend attractiveness
+                const stabilityScore = (1 / volatility) * 20; // Prefer stable stocks
+                const valuationScore = (15 / stock.peRatio) * 10; // Value consideration
+                const marketCapScore = Math.log(stock.marketCap / 1000000) * 2; // Size factor
+                const momentumScore = (stock.returns.slice(-3).reduce((a, b) => a + b) / 3) * 50; // Recent performance
+                
+                const totalScore = returnScore + dividendScore + stabilityScore + 
+                                 valuationScore + marketCapScore + momentumScore;
+                
+                return {
+                    ...stock,
+                    avgReturn,
+                    volatility,
+                    totalScore,
+                    returnScore,
+                    dividendScore,
+                    stabilityScore,
+                    valuationScore,
+                    marketCapScore,
+                    momentumScore
+                };
+            });
+
+            // Select top 3 stocks based on comprehensive scoring
+            const topStocks = stockScores
+                .sort((a, b) => b.totalScore - a.totalScore)
+                .slice(0, 3);
+
+            // Determine optimal allocation based on scores and risk
+            const totalScore = topStocks.reduce((sum, stock) => sum + stock.totalScore, 0);
+            const portfolio = topStocks.map(stock => ({
+                ...stock,
+                allocation: stock.totalScore / totalScore,
+                recommendationReasons: generateRecommendationReasons(stock, marketConditions)
+            }));
+
+            // Calculate portfolio metrics
+            const portfolioReturn = portfolio.re
